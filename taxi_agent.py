@@ -1,4 +1,3 @@
-from new_env import TaxiEnvCustomized
 import gym
 from gym.core import RenderFrame
 import numpy
@@ -20,26 +19,23 @@ def clear():
 clear()
 
 """Setup"""
-#1463 1663 992
-#env = TaxiEnvCustomized(render_mode='rgb_array')
-env = TaxiEnvCustomized(render_mode='human')
-#env = TaxiEnvCustomized(render_mode='ansi')
+
+env = gym.make("Taxi-v3", render_mode="human").env # Setup the Gym Environment
+#env = gym.make("Taxi-v3", render_mode="rgb_array").env # Setup the Gym Environment
 
 
 # Make a new matrix filled with zeros.
-# The matrix will be 2000x6 as there are 2000 states and 6 actions.
-#q_table = numpy.ones([env.observation_space.n, env.action_space.n])*(-50)
+# The matrix will be 500x6 as there are 500 states and 6 actions.
 #q_table = numpy.zeros([env.observation_space.n, env.action_space.n])
+q_table = numpy.load("./Downloads/taxi/q_table.npy")
 
-q_table = numpy.load("qq_table.npy")
-
-training_episodes = 40000 # Amount of times to run environment while training.
+training_episodes = 20000 # Amount of times to run environment while training.
 display_episodes = 10 # Amount of times to run environment after training.
 
 # Hyperparameters
 alpha = 0.1 # Learning Rate
 gamma = 0.6 # Discount Rate
-epsilon = 0.5 # Chance of selecting a random action instead of maximising reward.
+epsilon = 0.1 # Chance of selecting a random action instead of maximising reward.
 
 # For plotting metrics
 all_epochs = []
@@ -47,26 +43,18 @@ all_penalties = []
 
 """Training the Agent"""
 
-""" for i in range(training_episodes):
-    resetter = env.reset()  #Reset returns observation state and other info.
-    state = resetter[0]
-    info = resetter[1]
+"""for i in range(training_episodes):
+    state = env.reset()[0] # Reset returns observation state and other info. We only need the state.
     done = False
     penalties, reward, = 0, 0
-    #print(info["action_mask"].dtype)
-
+    
     while not done:
         if random.uniform(0, 1) < epsilon:
             action = env.action_space.sample() # Pick a new action for this state.
-            #action = env.action_space.sample()
         else:
-            action = numpy.argmax(q_table[state])# Pick the action which has previously given the highest reward.
-            #action = numpy.argmax(q_table[state])
-            #action = numpy.argmax(q_table[state, numpy.where(info["action_mask"] == 1)[0]])
+            action = numpy.argmax(q_table[state]) # Pick the action which has previously given the highest reward.
 
-        next_state, reward, done, truncated, info = env.step(action)
-       
-        
+        next_state, reward, done, truncated,info = env.step(action) 
         
         old_value = q_table[state, action] # Retrieve old value from the q-table.
         next_max = numpy.max(q_table[next_state])
@@ -77,7 +65,6 @@ all_penalties = []
 
         if reward == -10: # Checks if agent attempted to do an illegal action.
             penalties += 1
-        
 
         state = next_state
         
@@ -85,15 +72,13 @@ all_penalties = []
         print(f"Episode: {i}")
 
 print("Training finished.\n")
-numpy.save("qq_table.npy",q_table) """
-
-
+numpy.save("./Downloads/taxi/q_table.npy",q_table) """
 """Display and evaluate agent's performance after Q-learning."""
 
 total_epochs, total_penalties = 0, 0
 
 for _ in range(display_episodes):
-    state,info= env.reset()
+    state,info_ = env.reset()
     epochs, penalties, reward = 0, 0, 0
     
     done = False
@@ -104,7 +89,7 @@ for _ in range(display_episodes):
 
         if reward == -10:
             penalties += 1
-        
+
         epochs += 1
         clear()
         env.render()

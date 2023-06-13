@@ -10,24 +10,18 @@ from gym.envs.toy_text.utils import categorical_sample
 from gym.error import DependencyNotInstalled
 
 MAP = [
-    "+-------------------+",
-    "|R: : : | : : : : :G|",
-    "| : : : | : : : : : |",
-    "| : : : | : : : : : |",
-    "| : : : | : : : : : |",
-    "| : : : | : : : : : |",
-    "| : | : : : : | : : |",
-    "| : | : : : : | : : |",
-    "| : | : : : : | : : |",
-    "| : | : : : : | : : |",
-    "|Y: | : : : : |B: : |",
-    "+-------------------+",
+    "+---------+",
+    "|R: | : :G|",
+    "| : | : : |",
+    "| : : : : |",
+    "| | : | : |",
+    "|Y| : |B: |",
+    "+---------+",
 ]
+WINDOW_SIZE = (550, 350)
 
-WINDOW_SIZE = (1050, 600)
 
-
-class TaxiEnvCustomized(Env):
+class TaxiEnv(Env):
     """
 
     The Taxi Problem
@@ -44,18 +38,13 @@ class TaxiEnvCustomized(Env):
 
     Map:
 
-        "+-------------------+"
-        "|R: : : | : : : : :G|"
-        "| : : : | : : : : : |"
-        "| : : : | : : : : : |"
-        "| : : : | : : : : : |"
-        "| : : : | : : : : : |"
-        "| : | : : : : | : : |"
-        "| : | : : : : | : : |"
-        "| : | : : : : | : : |"
-        "| : | : : : : | : : |"
-        "|Y: | : : : : |B: : |"
-        "+-------------------+"
+        +---------+
+        |R: | : :G|
+        | : | : : |
+        | : : : : |
+        | | : | : |
+        |Y| : |B: |
+        +---------+
 
     ### Actions
     There are 6 discrete deterministic actions:
@@ -67,16 +56,16 @@ class TaxiEnvCustomized(Env):
     - 5: drop off passenger
 
     ### Observations
-    There are 2000 discrete states since there are 100 taxi positions, 5 possible
+    There are 500 discrete states since there are 25 taxi positions, 5 possible
     locations of the passenger (including the case when the passenger is in the
     taxi), and 4 destination locations.
 
-    Note that there are 1600 states that can actually be reached during an
+    Note that there are 400 states that can actually be reached during an
     episode. The missing states correspond to situations in which the passenger
     is at the same location as their destination, as this typically signals the
     end of an episode. Four additional states can be observed right after a
     successful episodes, when both the passenger and the taxi are at the destination.
-    This gives a total of 1604 reachable discrete states.
+    This gives a total of 404 reachable discrete states.
 
     Each state space is represented by the tuple:
     (taxi_row, taxi_col, passenger_location, destination)
@@ -139,31 +128,26 @@ class TaxiEnvCustomized(Env):
     def __init__(self, render_mode: Optional[str] = None):
         self.desc = np.asarray(MAP, dtype="c")
 
-        self.locs = locs = [(0, 0), (0, 9), (9, 0), (9, 7)]
+        self.locs = locs = [(0, 0), (0, 4), (4, 0), (4, 3)]
         self.locs_colors = [(255, 0, 0), (0, 255, 0), (255, 255, 0), (0, 0, 255)]
 
-        num_states = 2000
-        num_rows = 10
-        num_columns = 10
+        num_states = 500
+        num_rows = 5
+        num_columns = 5
         max_row = num_rows - 1
         max_col = num_columns - 1
         self.initial_state_distrib = np.zeros(num_states)
         num_actions = 6
-        """ self.P = {
-            state: {action: [] for action in range(num_actions)}
-            for state in range(num_states)
-        } """
         self.P = {
             state: {action: [] for action in range(num_actions)}
             for state in range(num_states)
         }
-
         for row in range(num_rows):
             for col in range(num_columns):
                 for pass_idx in range(len(locs) + 1):  # +1 for being inside taxi
                     for dest_idx in range(len(locs)):
                         state = self.encode(row, col, pass_idx, dest_idx)
-                        if pass_idx < 4 and pass_idx != dest_idx: #Passenger not in the taxi and not arrived
+                        if pass_idx < 4 and pass_idx != dest_idx:
                             self.initial_state_distrib[state] += 1
                         for action in range(num_actions):
                             # defaults
@@ -174,13 +158,13 @@ class TaxiEnvCustomized(Env):
                             terminated = False
                             taxi_loc = (row, col)
 
-                            if action == 0: #move south
+                            if action == 0:
                                 new_row = min(row + 1, max_row)
-                            elif action == 1: #move north
+                            elif action == 1:
                                 new_row = max(row - 1, 0)
-                            if action == 2 and self.desc[1 + row, 2 * col + 2] == b":": #move east
+                            if action == 2 and self.desc[1 + row, 2 * col + 2] == b":":
                                 new_col = min(col + 1, max_col)
-                            elif action == 3 and self.desc[1 + row, 2 * col] == b":": #move west
+                            elif action == 3 and self.desc[1 + row, 2 * col] == b":":
                                 new_col = max(col - 1, 0)
                             elif action == 4:  # pickup
                                 if pass_idx < 4 and taxi_loc == locs[pass_idx]:
@@ -199,13 +183,9 @@ class TaxiEnvCustomized(Env):
                             new_state = self.encode(
                                 new_row, new_col, new_pass_idx, dest_idx
                             )
-                            if new_state == state:
-                                reward = -10
-                            """ self.P[state][action].append(
+                            self.P[state][action].append(
                                 (1.0, new_state, reward, terminated)
-                            ) """
-                            self.P[state][action]= [1.0, new_state, reward, terminated]
-
+                            )
         self.initial_state_distrib /= self.initial_state_distrib.sum()
         self.action_space = spaces.Discrete(num_actions)
         self.observation_space = spaces.Discrete(num_states)
@@ -228,10 +208,9 @@ class TaxiEnvCustomized(Env):
         self.background_img = None
 
     def encode(self, taxi_row, taxi_col, pass_loc, dest_idx):
-         # (10) 10, 5, 4
-         #return ((taxi_row * 10 + taxi_col) * 5 + pass_loc) * 4 + dest_idx
+        # (5) 5, 5, 4
         i = taxi_row
-        i *= 10
+        i *= 5
         i += taxi_col
         i *= 5
         i += pass_loc
@@ -243,24 +222,23 @@ class TaxiEnvCustomized(Env):
         out = []
         out.append(i % 4)
         i = i // 4
-        out.append(i % 5)   
+        out.append(i % 5)
         i = i // 5
-        out.append(i % 10)
-        i = i // 10
+        out.append(i % 5)
+        i = i // 5
         out.append(i)
-        assert 0 <= i < 10
+        assert 0 <= i < 5
         return reversed(out)
 
     def action_mask(self, state: int):
         """Computes an action mask for the action space using the state information."""
-        """south-north-east-west-pickup-dropoff"""
         mask = np.zeros(6, dtype=np.int8)
         taxi_row, taxi_col, pass_loc, dest_idx = self.decode(state)
-        if taxi_row < 9:
+        if taxi_row < 4:
             mask[0] = 1
         if taxi_row > 0:
             mask[1] = 1
-        if taxi_col < 9 and self.desc[taxi_row + 1, 2 * taxi_col + 2] == b":":
+        if taxi_col < 4 and self.desc[taxi_row + 1, 2 * taxi_col + 2] == b":":
             mask[2] = 1
         if taxi_col > 0 and self.desc[taxi_row + 1, 2 * taxi_col] == b":":
             mask[3] = 1
@@ -275,25 +253,8 @@ class TaxiEnvCustomized(Env):
 
     def step(self, a):
         transitions = self.P[self.s][a]
-        #print(transitions)
-        #i = categorical_sample([t[0] for t in transitions], self.np_random)
-        #p, s, r, t = transitions[i]
-        p, s, r, t = transitions
-        
-        """max_reward = -1000
-        best_action = 10
-        for action in range(len(self.P[s])):
-            temp_transitions = self.P[self.s][action]
-            temp_p,temp_s,temp_r,temp_t = temp_transitions
-            if temp_r > max_reward:
-                max_reward = temp_r
-                best_action = action
-            
-
-        if self.P[s][best_action][1] == self.s:
-            self.P[self.s][a][2] = -20
-            self.P[s][best_action][2] = -20"""
-        #p, s, r, t = transitions[i]
+        i = categorical_sample([t[0] for t in transitions], self.np_random)
+        p, s, r, t = transitions[i]
         self.s = s
         self.lastaction = a
 
