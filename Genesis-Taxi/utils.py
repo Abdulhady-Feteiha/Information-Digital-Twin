@@ -46,10 +46,15 @@ def save_training_progress(q_table,episodes_num_steps,epsiodes_mean_reward,epsio
     results_df = pd.DataFrame({"episode":episodes,'num_steps':episodes_num_steps,"mean_reward":epsiodes_mean_reward,"cumulative_reward":epsiodes_cumulative_reward,
                                     "entropy":episodes_entropy,"penalty":episodes_penalty,"info_gain":episodes_info_gain}
                                     )
-    results_df.to_pickle(config.results_DIR)
+    results_df.to_excel(config.results_DIR)
 
+def early_stop(epsiodes_cumulative_reward):
+    if np.average(epsiodes_cumulative_reward[-10:])>config.early_stop_condition:
+        return True
+    else:
+        return False
 def evaluate():
-    results_df = pd.read_pickle(config.results_DIR)
+    results_df = pd.read_excel(config.results_DIR)
     # print(results_df.loc[:,"episode"])
     # print(results_df.loc[:,"num_steps"])
     figure, axis = plt.subplots(3, 2)
