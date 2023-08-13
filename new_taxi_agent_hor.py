@@ -29,9 +29,9 @@ env = TaxiEnvCustomized(render_mode='ansi')
 # Make a new matrix filled with zeros.
 # The matrix will be 2000x6 as there are 2000 states and 6 actions.
 #q_table = numpy.ones([env.observation_space.n, env.action_space.n])*(-50)
-#q_table = numpy.zeros([env.observation_space.n, env.action_space.n])
+q_table = numpy.zeros([env.observation_space.n, env.action_space.n])
 
-q_table = numpy.load("qq_table_hor.npy")
+#q_table = numpy.load("qq_table_hor.npy")
 
 training_episodes = 40000 # Amount of times to run environment while training.
 display_episodes = 10 # Amount of times to run environment after training.
@@ -47,7 +47,7 @@ all_penalties = []
 
 """Training the Agent"""
 
-""" for i in range(training_episodes):
+for i in range(training_episodes):
     resetter = env.reset()  #Reset returns observation state and other info.
     state = resetter[0]
     info = resetter[1]
@@ -85,12 +85,12 @@ all_penalties = []
         print(f"Episode: {i}")
 
 print("Training finished.\n")
-numpy.save("qq_table_hor.npy",q_table) """
+numpy.save("qq_table_hor.npy",q_table)
 
 
 """Display and evaluate agent's performance after Q-learning."""
 
-total_epochs, total_penalties = 0, 0
+""" total_epochs, total_penalties = 0, 0
 
 for _ in range(display_episodes):
     state,info= env.reset()
@@ -119,4 +119,4 @@ for _ in range(display_episodes):
 
 print(f"Results after {display_episodes} episodes:")
 print(f"Average timesteps per episode: {total_epochs / display_episodes}")
-print(f"Average penalties per episode: {total_penalties / display_episodes}")
+print(f"Average penalties per episode: {total_penalties / display_episodes}") """

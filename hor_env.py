@@ -141,7 +141,7 @@ class TaxiEnvCustomized(Env):
     def __init__(self, render_mode: Optional[str] = None):
         self.desc = np.asarray(MAP, dtype="c")
 
-        self.locs = locs = [(0, 0), (0, 9), (9, 0), (9, 7)]
+        self.locs = locs = [(0, 0), (0, 9), (11, 0), (11, 7)]
         self.locs_colors = [(255, 0, 0), (0, 255, 0), (255, 255, 0), (0, 0, 255)]
 
         num_states = 2400
