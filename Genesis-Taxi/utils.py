@@ -72,4 +72,7 @@ def evaluate():
     axis[2, 1].plot(results_df.loc[:,"episode"],results_df.loc[:,"info_gain"])
     axis[2, 1].set_title("information gain")
     # ax1 = results_df.plot.scatter(x='episode',y='num_steps',c='DarkBlue')
-    plt.show() 
+    plt.show()
+
+
+
