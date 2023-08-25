@@ -15,17 +15,23 @@ train_flag = True
 # Hyperparameters
 alpha = 0.1 # Learning Rate
 gamma = 0.6 # Discount Rate
-epsilon = 0.1 # Chance of selecting a random action instead of maximising reward.
+epsilon = 0.8 # Chance of selecting a random action instead of maximising reward.
 early_stop_condition = 10
 #approach to use 
 #values are 'normal','one','two','three'
 approach = 'three'
 # Heat map values 
-matrix = [[-4.857980995,-4.857980995,-4.857980995,-4.560714954,-4.857980995],
-          [-4.560714954,-4.560714954,-4.560714954,-4.297680549,-4.560714954],
-          [-4.560714954,-4.297680549,-4.297680549,-4.297680549,-4.560714954],
-          [-4.882643049,-4.560714954,-4.560714954,-4.560714954,-4.560714954],
-          [-5.297680549,-4.882643049,-4.882643049,-4.882643049,-4.882643049]]
+# matrix = [[-0.2605,-0.2605,-0.2605,-0.2605,-0.2605],
+#           [0.1545,0.1545,0.1545,0.4764,0.1545],
+#           [0.1545,0.4764,0.4764,0.4764,0.1545],
+#           [-0.2605,0.1545,0.1545,0.1545,0.1545],
+#           [-0.8455,-0.2605,-0.2605,-0.2605,-0.2605]]
+
+matrix = [[-4.939,-4.939,-4.939,-4.939,-4.939],
+          [-5.524,-5.524,-5.524,-4.202,-5.524],
+          [-5.524,-4.202,-4.202,-4.202,-5.524],
+          [-4.939,-4.524,-4.524,-4.202,-5.524],
+          [-5.524,-4.939,-4.939,-4.939,-4.939]]
 #directories
 q_table_DIR = f"Q_tables_Amr/original_env_approach_{approach}.npy"
 results_DIR = f"results_Amr/original_env_approach_{approach}.xlsx"
