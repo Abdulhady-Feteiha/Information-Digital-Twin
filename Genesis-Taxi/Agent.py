@@ -20,7 +20,8 @@ class Agent():
             # self.env = config.env(render_mode='human') # Setup the Gym Environment
             self.env = config.env
         self.train_flag = config.train_flag
-        self.matrix = config.matrix
+        self.q_matrix = config.q_matrix
+        self.alpha_matrix = config.alpha_matrix
         # env = TaxiEnvCustomized(render_mode='human')
         # self.env = TaxiEnvCustomized(render_mode='rgb_array')
         self.q_table = np.zeros([self.env.observation_space.n, self.env.action_space.n])
@@ -28,7 +29,7 @@ class Agent():
             if config.approach == 'normal' or config.approach == 'two':
                 self.q_table = np.zeros([self.env.observation_space.n, self.env.action_space.n])
             else:
-                self.q_table = self.calculate_q_table(self.matrix)
+                self.q_table = self.calculate_q_table(self.q_matrix)
             # self.q_table = np.random.rand(self.env.observation_space.n, self.env.action_space.n)
         else:
             self.q_table = np.load(config.q_table_DIR)
@@ -52,7 +53,7 @@ class Agent():
                     for dest_idx in range(no_of_dest_locations):
                         state = self.env.encode(row, col, pass_idx, dest_idx)
                         #print(self.q_table[state])
-                        q_table[state,:] = self.matrix[row][col]
+                        q_table[state,:] = matrix[row][col]
         return q_table
 
     def train(self):
@@ -98,8 +99,8 @@ class Agent():
                 else:
                     row,col,_,_ = self.env.decode(state)
                     next_row,next_col,_,_ = self.env.decode(next_state)
-                    alpha_old = self.matrix[row][col]
-                    alpha_new = self.matrix[next_row][next_col]
+                    alpha_old = self.alpha_matrix[row][col]
+                    alpha_new = self.alpha_matrix[next_row][next_col]
                     alpha_difference = alpha_new - alpha_old
                     new_value = (1 - config.alpha) * old_value + config.alpha * ((reward+alpha_difference) + config.gamma * next_max)
                 #update tue alpha change
