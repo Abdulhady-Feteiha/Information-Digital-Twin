@@ -20,7 +20,8 @@ class Agent():
             self.env = config.env(render_mode='rgb_array') # Setup the Gym Environment
             # self.env = config.env
         self.train_flag = config.train_flag
-        self.matrix = config.matrix
+        self.q_matrix = config.q_matrix
+        self.alpha_matrix = config.alpha_matrix
         # env = TaxiEnvCustomized(render_mode='human')
         # self.env = TaxiEnvCustomized(render_mode='rgb_array')
         self.q_table = np.zeros([self.env.observation_space.n, self.env.action_space.n])
@@ -28,7 +29,7 @@ class Agent():
             if config.approach == 'normal' or config.approach == 'two':
                 self.q_table = np.zeros([self.env.observation_space.n, self.env.action_space.n])
             else:
-                self.q_table = self.calculate_q_table(self.matrix)
+                self.q_table = self.calculate_q_table(self.q_matrix)
             # self.q_table = np.random.rand(self.env.observation_space.n, self.env.action_space.n)
         else:
             self.q_table = np.load(config.q_table_DIR)
@@ -52,26 +53,9 @@ class Agent():
                     for dest_idx in range(no_of_dest_locations):
                         state = self.env.encode(row, col, pass_idx, dest_idx)
                         #print(self.q_table[state])
-                        for action in range(no_of_actions):
-                            try:
-                                if action == 0:
-                                    q_table[state,action] = self.matrix[row][col]-self.matrix[row+1][col]
-                                if action == 1:
-                                    q_table[state,action] = self.matrix[row][col]-self.matrix[row-1][col]
-                                if action == 2:
-                                    q_table[state,action] = self.matrix[row][col]-self.matrix[row][col+1]
-                                if action == 3:
-                                    q_table[state,action] = self.matrix[row][col]-self.matrix[row][col-1]
-                                if action == 4 or action==5:
-                                    if dest_idx==dest_idx:
-                                        q_table[state,action] = 0
-                                    else:
-                                        q_table[state,action] = config.illegal_pen
-
-                            except Exception as e:
-                                q_table[state,action] = config.illegal_pen
-                                
+                        q_table[state,:] = matrix[row][col]
         return q_table
+                                
 
     def train(self):
         """Training the Agent"""
@@ -123,8 +107,8 @@ class Agent():
                     # print("action: ",action)
                     # print(self.q_table[state])
                     try:
-                        alpha_old = self.matrix[row][col]
-                        alpha_new = self.matrix[next_row][next_col]
+                        alpha_old = self.alpha_matrix[row][col]
+                        alpha_new = self.alpha_matrix[next_row][next_col]
                         alpha_difference = alpha_new - alpha_old
 
                     except Exception as e:
