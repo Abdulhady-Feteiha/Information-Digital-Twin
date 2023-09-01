@@ -4,7 +4,7 @@ import random
 from time import sleep
 import matplotlib.pyplot as plt
 from scipy.special import entr
-from utils import clear,calculate_entropy,save_training_progress,early_stop
+from utils import clear,calculate_entropy,save_training_progress,early_stop,report
 import config
 import time
 import cv2
@@ -13,12 +13,12 @@ class Agent():
         clear()
         """Setup"""
         # env = gym.make("Taxi-v3", render_mode="human").env # Setup the Gym Environment
-        if config.train_flag:
-            # self.env = config.env(render_mode='rgb_array') # Setup the Gym Environment
-            self.env = config.env
+        if config.display_flag:
+            self.env = config.env(render_mode='human') # Setup the Gym Environment
+            # self.env = config.env
         else:
-            # self.env = config.env(render_mode='human') # Setup the Gym Environment
-            self.env = config.env
+            self.env = config.env(render_mode='rgb_array') # Setup the Gym Environment
+            # self.env = config.env
         self.train_flag = config.train_flag
         self.matrix = config.matrix
         # env = TaxiEnvCustomized(render_mode='human')
@@ -52,7 +52,25 @@ class Agent():
                     for dest_idx in range(no_of_dest_locations):
                         state = self.env.encode(row, col, pass_idx, dest_idx)
                         #print(self.q_table[state])
-                        q_table[state,:] = self.matrix[row][col]
+                        for action in range(no_of_actions):
+                            try:
+                                if action == 0:
+                                    q_table[state,action] = self.matrix[row][col]-self.matrix[row+1][col]
+                                if action == 1:
+                                    q_table[state,action] = self.matrix[row][col]-self.matrix[row-1][col]
+                                if action == 2:
+                                    q_table[state,action] = self.matrix[row][col]-self.matrix[row][col+1]
+                                if action == 3:
+                                    q_table[state,action] = self.matrix[row][col]-self.matrix[row][col-1]
+                                if action == 4 or action==5:
+                                    if dest_idx==dest_idx:
+                                        q_table[state,action] = 0
+                                    else:
+                                        q_table[state,action] = config.illegal_pen
+
+                            except Exception as e:
+                                q_table[state,action] = config.illegal_pen
+                                
         return q_table
 
     def train(self):
@@ -68,6 +86,8 @@ class Agent():
         episodes_info_gain = []
         for i in range(config.training_episodes):
             t0 = time.time()
+            print(i)
+
             if i%100==0:
                 print("episode: ",i)
                 save_training_progress(self.q_table,episodes_num_steps,epsiodes_mean_reward,epsiodes_cumulative_reward,episodes_entropy,episodes_penalty,episodes_info_gain)
@@ -98,9 +118,17 @@ class Agent():
                 else:
                     row,col,_,_ = self.env.decode(state)
                     next_row,next_col,_,_ = self.env.decode(next_state)
-                    alpha_old = self.matrix[row][col]
-                    alpha_new = self.matrix[next_row][next_col]
-                    alpha_difference = alpha_new - alpha_old
+                    # print("state: ",row,col)
+                    # print("next state: ",next_row,next_col)
+                    # print("action: ",action)
+                    # print(self.q_table[state])
+                    try:
+                        alpha_old = self.matrix[row][col]
+                        alpha_new = self.matrix[next_row][next_col]
+                        alpha_difference = alpha_new - alpha_old
+
+                    except Exception as e:
+                        alpha_difference = config.illegal_pen
                     new_value = (1 - config.alpha) * old_value + config.alpha * ((reward+alpha_difference) + config.gamma * next_max)
                 #update tue alpha change
                 
@@ -179,3 +207,57 @@ class Agent():
         print(f"Results after {config.display_episodes} episodes:")
         print(f"Average timesteps per episode: {total_epochs / config.display_episodes}")
         print(f"Average penalties per episode: {total_penalties / config.display_episodes}")
+
+    def test(self):
+        fail_count, total_epochs, total_penalties = 0, 0, 0
+        episodes_num_steps = []
+        epsiodes_cumulative_reward = []
+        epsiodes_mean_reward = []
+        episodes_entropy = []
+        episodes_penalty = []
+        episodes_info_gain = []
+        for i in range(config.test_episodes):
+            state,info_ = self.env.reset(seed=i)
+            epochs, penalties, reward = 0, 0, 0
+            num_steps = 0
+            rewards = []
+            entropy_value = 0
+            done = False
+            print(i)
+            while not done:
+                num_steps+=1
+                action = np.argmax(self.q_table[state])
+                # print(self.q_table[state])
+                state, reward, done, truncated,info = self.env.step(action)
+                # print(info["action_mask"])
+                rewards.append(reward)
+
+                if reward == -10:
+                    penalties += 1
+
+                epochs += 1
+                # clear()
+                self.env.render()
+                # print(f"Timestep: {epochs}")
+                # print(f"State: {state}")
+                # print(f"Action: {action}")
+                # print(f"Reward: {reward}")
+                # sleep(0.15) # Sleep so the user can see the 
+                if num_steps>100:
+                    fail_count+=1
+                    break
+            total_penalties += penalties
+            total_epochs += epochs
+            episodes_num_steps.append(num_steps)
+            epsiodes_cumulative_reward.append(np.sum(rewards))
+            epsiodes_mean_reward.append(np.average(rewards))
+            entropy = calculate_entropy(self.q_table)[0]
+            # episodes_info_gain.append(entropy-past_intropy)
+            # episodes_entropy.append(entropy)
+            episodes_penalty.append(penalties)
+        report(episodes_num_steps,epsiodes_mean_reward,epsiodes_cumulative_reward,episodes_penalty)
+        print(f"Results after {config.display_episodes} episodes:")
+        print(f"Average timesteps per episode: {total_epochs / config.display_episodes}")
+        print(f"Average penalties per episode: {total_penalties / config.display_episodes}")
+        print("Entropy of the Q table",entropy)
+        print("Sucess rate:",(config.test_episodes-fail_count)/config.test_episodes)

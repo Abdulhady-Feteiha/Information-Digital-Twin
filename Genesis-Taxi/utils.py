@@ -48,6 +48,13 @@ def save_training_progress(q_table,episodes_num_steps,epsiodes_mean_reward,epsio
                                     )
     results_df.to_excel(config.results_DIR)
 
+def report(episodes_num_steps,epsiodes_mean_reward,epsiodes_cumulative_reward,episodes_penalty):
+    episodes = [ i for i in range(len(epsiodes_cumulative_reward))]
+    # for i in range(len(episodes_num_steps)):
+    results_df = pd.DataFrame({"episode":episodes,'num_steps':episodes_num_steps,"mean_reward":epsiodes_mean_reward,"cumulative_reward":epsiodes_cumulative_reward,"penalty":episodes_penalty}
+                                    )
+    results_df.to_excel(config.report_DIR)
+
 def early_stop(epsiodes_cumulative_reward):
     if np.average(epsiodes_cumulative_reward[-10:])>config.early_stop_condition:
         return True
