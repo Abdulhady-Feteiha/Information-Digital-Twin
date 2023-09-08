@@ -63,7 +63,7 @@ class Agent():
                                 if action == 3:
                                     q_table[state,action] = self.matrix[row][col]-self.matrix[row][col-1]
                                 if action == 4 or action==5:
-                                    if dest_idx==dest_idx:
+                                    if dest_idx==pass_idx:
                                         q_table[state,action] = 0
                                     else:
                                         q_table[state,action] = config.illegal_pen
@@ -122,13 +122,10 @@ class Agent():
                     # print("next state: ",next_row,next_col)
                     # print("action: ",action)
                     # print(self.q_table[state])
-                    try:
-                        alpha_old = self.matrix[row][col]
-                        alpha_new = self.matrix[next_row][next_col]
-                        alpha_difference = alpha_new - alpha_old
+                    alpha_old = self.matrix[row][col]
+                    alpha_new = self.matrix[next_row][next_col]
+                    alpha_difference = alpha_new - alpha_old
 
-                    except Exception as e:
-                        alpha_difference = config.illegal_pen
                     new_value = (1 - config.alpha) * old_value + config.alpha * ((reward+alpha_difference) + config.gamma * next_max)
                 #update tue alpha change
                 
@@ -185,9 +182,12 @@ class Agent():
             
             while not done:
                 action = np.argmax(self.q_table[state])
-                print(self.q_table[state])
+                action = 4
+                print("Q table of state",self.q_table[state])
+                print(f"P: {self.env.P[state][action]}")
+
                 state, reward, done, truncated,info = self.env.step(action)
-                print(info["action_mask"])
+                print("action mask",info["action_mask"])
 
                 if reward == -10:
                     penalties += 1
@@ -199,7 +199,7 @@ class Agent():
                 print(f"State: {state}")
                 print(f"Action: {action}")
                 print(f"Reward: {reward}")
-                sleep(0.15) # Sleep so the user can see the 
+                sleep(20) # Sleep so the user can see the 
 
             total_penalties += penalties
             total_epochs += epochs
