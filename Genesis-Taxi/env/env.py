@@ -47,20 +47,29 @@ class env(Env):
                         for action in range(num_actions):
                             # defaults
                             new_row, new_col, new_pass_idx = row, col, pass_idx
-                            reward = (
-                                config.step_reward
-                            )  # default reward when there is no pickup/dropoff
+                            if config.approach == "normal":
+                                reward = (
+                                    config.step_reward
+                                )  # default reward when there is no pickup/dropoff
                             terminated = False
                             taxi_loc = (row, col)
 
                             if action == 0: #move south
                                 new_row = min(row + 1, max_row)
+                                if config.approach == "three":
+                                    reward =  config.Matrix[new_row][col] - config.Matrix[row][col]
                             elif action == 1: #move north
                                 new_row = max(row - 1, 0)
+                                if config.approach == "three":
+                                    reward = config.Matrix[new_row][col] - config.Matrix[row][col]
                             if action == 2 and self.desc[1 + row, 2 * col + 2] == b":": #move east
                                 new_col = min(col + 1, max_col)
+                                if config.approach == "three":
+                                    reward =  config.Matrix[row][new_col] - config.Matrix[row][col]
                             elif action == 3 and self.desc[1 + row, 2 * col] == b":": #move west
                                 new_col = max(col - 1, 0)
+                                if config.approach == "three":
+                                    reward = config.Matrix[row][new_col] - config.Matrix[row][col]
                             elif action == 4:  # pickup
                                 if pass_idx < 4 and taxi_loc == locs[pass_idx]:
                                     new_pass_idx = 4
@@ -70,11 +79,14 @@ class env(Env):
                                 if (taxi_loc == locs[dest_idx]) and pass_idx == 4:
                                     new_pass_idx = dest_idx
                                     terminated = True
-                                    reward = 20
+                                    reward = config.end_of_episode_reward
                                 elif (taxi_loc in locs) and pass_idx == 4:
                                     new_pass_idx = locs.index(taxi_loc)
                                 else:  # dropoff at wrong location
-                                    reward = -10
+                                    reward = config.wrong_drop_reward
+                            action_mask = self.action_mask(state)
+                            if action_mask[action]==0:
+                                reward = config.illegal_action_reward
                             new_state = self.encode(
                                 new_row, new_col, new_pass_idx, dest_idx
                             )

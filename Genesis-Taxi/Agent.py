@@ -20,15 +20,11 @@ class Agent():
             self.env = config.env(render_mode='rgb_array') # Setup the Gym Environment
             # self.env = config.env
         self.train_flag = config.train_flag
-        self.matrix = config.matrix
         # env = TaxiEnvCustomized(render_mode='human')
         # self.env = TaxiEnvCustomized(render_mode='rgb_array')
         self.q_table = np.zeros([self.env.observation_space.n, self.env.action_space.n])
         if self.train_flag:
-            if config.approach == 'normal' or config.approach == 'two':
-                self.q_table = np.zeros([self.env.observation_space.n, self.env.action_space.n])
-            else:
-                self.q_table = self.calculate_q_table(self.matrix)
+            self.q_table = np.zeros([self.env.observation_space.n, self.env.action_space.n])
             # self.q_table = np.random.rand(self.env.observation_space.n, self.env.action_space.n)
         else:
             self.q_table = np.load(config.q_table_DIR)
@@ -36,42 +32,6 @@ class Agent():
         # For plotting metrics
         self.all_epochs = []
         self.all_penalties = []
-
-    def calculate_q_table(self,matrix):
-        """ Intitalize the Q table and do necessary preprocessing """
-        q_table = self.q_table
-        no_of_states = self.env.observation_space.n
-        no_of_pass_locations = 5
-        no_of_dest_locations = 4
-        no_of_grids = int(no_of_states) / (no_of_pass_locations*no_of_dest_locations)
-        no_of_rows = no_of_cols = int(np.sqrt(no_of_grids))
-        no_of_actions = self.env.action_space.n
-        for row in range(no_of_rows):
-            for col in range(no_of_cols):
-                for pass_idx in range(no_of_pass_locations):
-                    for dest_idx in range(no_of_dest_locations):
-                        state = self.env.encode(row, col, pass_idx, dest_idx)
-                        #print(self.q_table[state])
-                        for action in range(no_of_actions):
-                            try:
-                                if action == 0:
-                                    q_table[state,action] = self.matrix[row][col]-self.matrix[row+1][col]
-                                if action == 1:
-                                    q_table[state,action] = self.matrix[row][col]-self.matrix[row-1][col]
-                                if action == 2:
-                                    q_table[state,action] = self.matrix[row][col]-self.matrix[row][col+1]
-                                if action == 3:
-                                    q_table[state,action] = self.matrix[row][col]-self.matrix[row][col-1]
-                                if action == 4 or action==5:
-                                    if dest_idx==pass_idx:
-                                        q_table[state,action] = 0
-                                    else:
-                                        q_table[state,action] = config.illegal_pen
-
-                            except Exception as e:
-                                q_table[state,action] = config.illegal_pen
-                                
-        return q_table
 
     def train(self):
         """Training the Agent"""
@@ -113,20 +73,7 @@ class Agent():
                 old_value = self.q_table[state, action] # Retrieve old value from the q-table.
                 next_max = np.max(self.q_table[next_state])
 
-                if config.approach == 'normal' or config.approach == 'one':
-                    new_value = (1 - config.alpha) * old_value + config.alpha * (reward + config.gamma * next_max)
-                else:
-                    row,col,_,_ = self.env.decode(state)
-                    next_row,next_col,_,_ = self.env.decode(next_state)
-                    # print("state: ",row,col)
-                    # print("next state: ",next_row,next_col)
-                    # print("action: ",action)
-                    # print(self.q_table[state])
-                    alpha_old = self.matrix[row][col]
-                    alpha_new = self.matrix[next_row][next_col]
-                    alpha_difference = alpha_new - alpha_old
-
-                    new_value = (1 - config.alpha) * old_value + config.alpha * ((reward+alpha_difference) + config.gamma * next_max)
+                new_value = (1 - config.alpha) * old_value + config.alpha * (reward + config.gamma * next_max)
                 #update tue alpha change
                 
                 # Update q-value for current state.
@@ -199,7 +146,7 @@ class Agent():
                 print(f"State: {state}")
                 print(f"Action: {action}")
                 print(f"Reward: {reward}")
-                sleep(20) # Sleep so the user can see the 
+                # sleep(20) # Sleep so the user can see the 
 
             total_penalties += penalties
             total_epochs += epochs
@@ -246,16 +193,21 @@ class Agent():
                 if num_steps>100:
                     fail_count+=1
                     break
+                if config.display_flag:
+                    print(f"Timestep: {epochs}")
+                    print(f"State: {state}")
+                    print(f"Action: {action}")
+                    print(f"Reward: {reward}")
             total_penalties += penalties
             total_epochs += epochs
             episodes_num_steps.append(num_steps)
             epsiodes_cumulative_reward.append(np.sum(rewards))
             epsiodes_mean_reward.append(np.average(rewards))
-            entropy = calculate_entropy(self.q_table)[0]
             # episodes_info_gain.append(entropy-past_intropy)
             # episodes_entropy.append(entropy)
             episodes_penalty.append(penalties)
-        report(episodes_num_steps,epsiodes_mean_reward,epsiodes_cumulative_reward,episodes_penalty)
+        entropy = calculate_entropy(self.q_table)[0]
+        # report(episodes_num_steps,epsiodes_mean_reward,epsiodes_cumulative_reward,episodes_penalty)
         print(f"Results after {config.display_episodes} episodes:")
         print(f"Average timesteps per episode: {total_epochs / config.display_episodes}")
         print(f"Average penalties per episode: {total_penalties / config.display_episodes}")
