@@ -46,7 +46,8 @@ class Agent():
         episodes_info_gain = []
         for i in range(config.training_episodes):
             t0 = time.time()
-            print(i)
+            # print(i)
+            print("episode: ",i)
 
             if i%100==0:
                 print("episode: ",i)
@@ -59,7 +60,10 @@ class Agent():
             rewards = []
             entropy_value = 0
             #print(i)
+            t = time.time()
             while not done:
+                # if time.time()-t>60:
+                #     return None,None,None,None,None,None,None
                 num_steps+=1
                 if random.uniform(0, 1) < config.epsilon:
                     action = self.env.action_space.sample() # Pick a new action for this state.
@@ -68,7 +72,7 @@ class Agent():
                     action = np.argmax(self.q_table[state]) # Pick the action which has previously given the highest reward.
 
                 next_state, reward, done, truncated,info = self.env.step(action)
-
+                # print("reward",reward)
                 rewards.append(reward)
                 old_value = self.q_table[state, action] # Retrieve old value from the q-table.
                 next_max = np.max(self.q_table[next_state])
@@ -83,7 +87,7 @@ class Agent():
                 # print(new_value)
                 self.q_table[state, action] = new_value
 
-                if reward == -10: # Checks if agent attempted to do an illegal action.
+                if reward < 0: # Checks if agent attempted to do an illegal action.
                     penalties += 1
 
                 state = next_state
@@ -129,7 +133,6 @@ class Agent():
             
             while not done:
                 action = np.argmax(self.q_table[state])
-                action = 4
                 print("Q table of state",self.q_table[state])
                 print(f"P: {self.env.P[state][action]}")
 
@@ -164,6 +167,7 @@ class Agent():
         episodes_penalty = []
         episodes_info_gain = []
         for i in range(config.test_episodes):
+            i+=5
             state,info_ = self.env.reset(seed=i)
             epochs, penalties, reward = 0, 0, 0
             num_steps = 0
@@ -178,8 +182,8 @@ class Agent():
                 state, reward, done, truncated,info = self.env.step(action)
                 # print(info["action_mask"])
                 rewards.append(reward)
-
-                if reward == -10:
+                # print("reward",reward)
+                if reward < 0:
                     penalties += 1
 
                 epochs += 1
@@ -207,9 +211,11 @@ class Agent():
             # episodes_entropy.append(entropy)
             episodes_penalty.append(penalties)
         entropy = calculate_entropy(self.q_table)[0]
-        # report(episodes_num_steps,epsiodes_mean_reward,epsiodes_cumulative_reward,episodes_penalty)
+        SR = (config.test_episodes-fail_count)/config.test_episodes # sucess rate 
+        report(episodes_num_steps,epsiodes_mean_reward,epsiodes_cumulative_reward,episodes_penalty)
         print(f"Results after {config.display_episodes} episodes:")
         print(f"Average timesteps per episode: {total_epochs / config.display_episodes}")
         print(f"Average penalties per episode: {total_penalties / config.display_episodes}")
         print("Entropy of the Q table",entropy)
-        print("Sucess rate:",(config.test_episodes-fail_count)/config.test_episodes)
+        print("Sucess rate:",SR)
+        return SR

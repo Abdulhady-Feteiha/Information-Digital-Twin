@@ -15,18 +15,20 @@ import numpy as np
 env = env
 training_episodes = 10000 # Amount of times to run environment while training.
 display_episodes = 10 # Amount of times to run environment after training.
-test_episodes = 1000
-train_flag = False
-display_flag = True
+test_episodes = 100
+train_flag = True
+display_flag = False
+search_flag = False
 # Hyperparameters
-alpha = 0.1 # Learning Rate
-gamma = 0.8 # Discount Rate
-epsilon = 0.8 # Chance of selecting a random action instead of maximising reward.
+alpha = 0.2 # Learning Rate
+gamma = 0.3 # Discount Rate
+epsilon = 0.4 # Chance of selecting a random action instead of maximising reward.
 early_stop_condition = 10
 #approach to use 
 #values are 'normal','one','two','three'
 approach = config_general.approach
 
-q_table_DIR = f"Q_tables/eps_{epsilon}_{approach}_gamma_{gamma}.npy"
-results_DIR = f"results/eps_{epsilon}_{approach}_gamma_{gamma}.xlsx"
-report_DIR = f"reports/eps_{epsilon}_{approach}_gamma_{gamma}.xlsx"
+q_table_DIR = f"Q_tables/10X12_{epsilon}_{approach}_gamma_{gamma}.npy"
+results_DIR = f"results/10X12_{epsilon}_{approach}_gamma_{gamma}.xlsx"
+report_DIR = f"reports/10X12_{epsilon}_{approach}_gamma_{gamma}.xlsx"
+pickle_name = f"reports/10X12_.pkl"
